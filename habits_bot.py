@@ -129,8 +129,6 @@ def extract_habits(text):
         return {"error": "Failed to parse response as JSON", "raw_response": extraction}
 
 
-
-
 @bot.message_handler(content_types=['voice'])
 def handle_help_command(message: types.Message):
     logging.info(f"Get audio message")
