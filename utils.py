@@ -1,9 +1,14 @@
+from datetime import datetime
+import os
+import json
+
 habits_tools = [
     {
         "type": "function",
         "function": {
             "name": "habit_and_diary_extraction",
-            "description": "Extracts specific habit tracking and diary details from a transcription of daily activities.",
+            "description": "Extracts specific habit tracking and diary details from a transcription of daily "
+                           "activities.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -32,7 +37,8 @@ habits_tools = [
                         ],
                         "minimum": 1,
                         "maximum": 5,
-                        "description": "Mood level on a scale from 1 to 5, where 1 is very bad and 5 is very good. If the person did not explicitly mention a mood level, set this value to null."
+                        "description": "Mood level on a scale from 1 to 5, where 1 is very bad and 5 is very good."
+                                       "If the person did not explicitly mention a mood level, set this value to null."
                     },
                     "sex": {
                         "type": "boolean",
@@ -45,6 +51,7 @@ habits_tools = [
                     "diary": {
                         "type": "string",
                         "description": "A brief diary entry summarizing the key events and activities of the day."
+                                       "Should be in the same language as input."
                     }
                 },
                 "required": [
@@ -62,3 +69,31 @@ habits_tools = [
         }
     }
 ]
+
+
+def process_and_save_habits(input_data: dict):
+    # Extract current datetime as key
+    current_datetime = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+
+    # Separate the habits (all fields except "diary") into another key "habits"
+    habits = {key: input_data[key] for key in input_data if key != "diary"}
+    diary = {"diary": input_data["diary"]}
+
+    # Create new JSON structure
+    updated_data = {
+        current_datetime: {
+            "habits": habits,
+            **diary
+        }
+    }
+
+    # Create folder path for saving the file
+    folder_path = 'extracted_habits'
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Save the updated JSON file to the folder
+    file_path = os.path.join(folder_path, f'{current_datetime}.json')
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(updated_data, f, ensure_ascii=False, indent=4)
+
+    return file_path

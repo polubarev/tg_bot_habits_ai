@@ -1,8 +1,7 @@
 import os
 import json
 import requests
-from telebot import TeleBot
-from telebot import types
+from telebot import TeleBot, types
 from dotenv import load_dotenv
 import messages
 import schedule
@@ -11,7 +10,7 @@ import time
 from openai import OpenAI
 import logging
 from pydub import AudioSegment
-from utils import habits_tools
+from utils import habits_tools, process_and_save_habits
 
 load_dotenv()
 
@@ -95,7 +94,7 @@ def extract_habits(text):
                         "text": "You are a professional assistant for tracking habits and writing a daily diary. You "
                                 "will receive a transcription of a human's day based on their voice messages. From "
                                 "this transcription, extract the information. Ensure that the diary is concise and "
-                                "captures the main events of the day."
+                                "captures the main events of the day and matches the languages of input."
                     }
                 ]
             },
@@ -124,7 +123,7 @@ def extract_habits(text):
 
     try:
         response_dict = json.loads(extraction)
-        return json.dumps(response_dict, indent=4, ensure_ascii=False)
+        return response_dict
     except json.JSONDecodeError:
         return {"error": "Failed to parse response as JSON", "raw_response": extraction}
 
@@ -140,22 +139,45 @@ def handle_help_command(message: types.Message):
         model="whisper-1",
         file=audio_file
     )
+
     if transcription:
-        logging.info(f"Successfully transcript")
+        logging.info(f"Successfully transcript:")
+        logging.info(transcription.text)
 
     extracted_habits = extract_habits(transcription.text)
-    if extracted_habits:
+    if 'error' not in extracted_habits:
         logging.info(f"Successfully extracted")
+        process_and_save_habits(extracted_habits)
+
+    preprocessed_json = f"""```
+{json.dumps(extracted_habits, indent=4, ensure_ascii=False)}
+```"""
 
     bot.send_message(
         message.chat.id,
-        transcription.text,
+        preprocessed_json,
+        parse_mode='MARKDOWN'
     )
 
-    bot.send_message(
-        message.chat.id,
-        extracted_habits,
-    )
+
+@bot.message_handler(commands=["manual_input"])
+def handle_help_command(message: types.Message):
+    message_with_example = """Пришли мне в таком формате корректный дневник:
+```
+{
+    "sleep": 6,
+    "morning_exercises": false,
+    "training": false,
+    "alcohol": 0,
+    "mood": null,
+    "sex": false,
+    "masturbation": 0,
+    "diary": "Туть твой текст псина"
+}
+```"""
+
+    msg = bot.reply_to(message, message_with_example, parse_mode='MARKDOWN')
+    bot.register_next_step_handler(msg, lambda x: process_and_save_habits(json.loads(x.text)))
 
 
 if __name__ == "__main__":
