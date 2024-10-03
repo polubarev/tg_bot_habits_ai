@@ -5,3 +5,4 @@
 !/audio_messages/.gitkeep
 /extracted_habits/*
 !/extracted_habits/.gitkeep
+/database.csv

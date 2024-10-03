@@ -91,10 +91,11 @@ def extract_habits(text):
                 "content": [
                     {
                         "type": "text",
-                        "text": "You are a professional assistant for tracking habits and writing a daily diary. You "
-                                "will receive a transcription of a human's day based on their voice messages. From "
-                                "this transcription, extract the information. Ensure that the diary is concise and "
-                                "captures the main events of the day and matches the languages of input."
+                        "text": "You are a professional assistant for tracking habits and writing a daily diary. "
+                                "You will receive a transcription of a human's day based on their voice messages. "
+                                "From this transcription, extract the relevant information. "
+                                "Leave the diary content as it is, but correct any grammatical or other errors, "
+                                "ensuring the language remains consistent with the input."
                     }
                 ]
             },
